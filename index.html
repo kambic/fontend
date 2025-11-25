@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flowbite Admin Dashboard</title>
+  <title>Flowbite Admin Dashboard - Simplified</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -15,14 +15,14 @@
   <script>
     function dashboardApp() {
       return {
-        // Layout State
+        // Layout State (minimal classes used here)
         sidebarOpen: window.innerWidth >= 640,
         notificationsOpen: false,
         userMenuOpen: false,
         kanbanOpen: false,
-        currentView: 'dashboard',
+        currentView: 'filemanager', // Start on file manager for easy testing
 
-        // File Manager State
+        // File Manager State (unchanged)
         files: [
           { name: 'Documents', type: 'folder', size: '', date: '2023-11-20', children: [
             { name: 'Project Proposal.pdf', type: 'file', size: '1.2MB', date: '2023-11-20' },
@@ -36,7 +36,6 @@
           { name: 'Videos', type: 'folder', size: '', date: '2023-10-01', children: [] },
           { name: 'index.html', type: 'file', size: '5KB', date: '2023-11-24' },
           { name: 'styles.css', type: 'file', size: '20KB', date: '2023-11-24' },
-          { name: 'script.js', type: 'file', size: '8KB', date: '2023-11-24' },
           { name: 'README.md', type: 'file', size: '1KB', date: '2023-11-24' },
         ],
         
@@ -55,47 +54,51 @@
           return this.openFolders.includes(folderName);
         },
         
-        // Utility using Font Awesome classes instead of SVGs
+        // Utility using Font Awesome classes
         getFileIcon(type, name) {
           if (type === 'folder') {
-            // Folder icon is handled separately by the chevron logic
             return '<i class="fa-solid fa-folder me-2 text-yellow-500"></i>';
           } 
-          
           const extension = name.split('.').pop().toLowerCase();
           
-          if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(extension)) {
+          if (['jpg', 'png', 'gif', 'svg'].includes(extension)) {
             return '<i class="fa-regular fa-image me-2 text-purple-500"></i>';
           } 
           if (extension === 'pdf') {
             return '<i class="fa-regular fa-file-pdf me-2 text-red-600"></i>';
           }
-          if (['html', 'css', 'js', 'json', 'ts'].includes(extension)) {
+          if (['html', 'css', 'js', 'json'].includes(extension)) {
              return '<i class="fa-regular fa-file-code me-2 text-blue-500"></i>';
           }
-          if (['md', 'txt', 'log'].includes(extension)) {
+          if (['md', 'txt'].includes(extension)) {
              return '<i class="fa-regular fa-file-lines me-2 text-gray-400"></i>';
           }
-          if (['zip', 'rar', '7z'].includes(extension)) {
-             return '<i class="fa-regular fa-file-zipper me-2 text-orange-500"></i>';
-          }
-           // Default file icon
            return '<i class="fa-regular fa-file me-2 text-gray-500"></i>';
         },
       }
     }
     
-    // Component for recursive rendering of file manager items
+    // Component for recursive rendering and styling
     function fileItem(file) {
       return {
         file: file,
         isOpen: false, 
+        
+        // Define reusable classes here
+        baseClasses: 'flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 cursor-pointer transition duration-150 ease-in-out',
+        activeFolderClasses: 'font-semibold bg-gray-100 dark:bg-gray-700',
+        
         init() {
+          // Sync state
           this.isOpen = this.$store.app.isFolderOpen(this.file.name);
           this.$watch('$store.app.openFolders', () => {
              this.isOpen = this.$store.app.isFolderOpen(this.file.name);
-          })
+          });
+          
+          // Apply base classes to the root element when component loads
+          this.$el.querySelector('.file-row').classList.add(...this.baseClasses.split(' '));
         },
+        
         toggle() {
           if (this.file.type === 'folder') {
             this.$store.app.toggleFolder(this.file.name);
@@ -115,58 +118,13 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center justify-start rtl:justify-end">
           <button @click="sidebarOpen = !sidebarOpen" type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
-            </svg>
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path></svg>
           </button>
           <a href="#" class="flex ms-2 md:me-24">
             <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">Flowbite Admin</span>
           </a>
         </div>
-        <div class="flex items-center gap-3">
-          <div class="hidden lg:block">
-            <div class="relative">
-              <input type="text" class="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Search...">
-              <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 20 20">
-                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-          <div class="relative">
-            <button type="button" class="relative p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700" @click="notificationsOpen = !notificationsOpen">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
-              </svg>
-              <span class="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">3</span>
-            </button>
-            <div x-show="notificationsOpen" @click.away="notificationsOpen = false" x-transition.origin.top.right class="absolute right-0 top-14 z-20 w-full max-w-sm bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-800 dark:divide-gray-700">
-              <div class="block px-4 py-2 font-medium text-center text-gray-700 rounded-t-lg bg-gray-50 dark:bg-gray-800 dark:text-white">Notifications</div>
-              <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                <a href="#" class="flex px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700">...</a>
-                <a href="#" class="flex px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700">...</a>
-              </div>
-            </div>
-          </div>
-          <div class="relative">
-            <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" @click="userMenuOpen = !userMenuOpen">
-              <img class="w-8 h-8 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo">
-            </button>
-            <div x-show="userMenuOpen" @click.away="userMenuOpen = false" x-transition.origin.top.right class="absolute right-0 z-50 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600">
-              <div class="px-4 py-3">
-                <p class="text-sm text-gray-900 dark:text-white">Neil Sims</p>
-                <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300">neil.sims@flowbite.com</p>
-              </div>
-              <ul class="py-1">
-                <li><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Dashboard</a></li>
-                <li><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Settings</a></li>
-                <li><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Sign out</a></li>
-              </ul>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
   </nav>
 
@@ -175,42 +133,15 @@
       <ul class="space-y-2 font-medium">
         <li>
           <a href="#" @click="currentView = 'dashboard'" :class="currentView === 'dashboard' ? 'bg-gray-100 dark:bg-gray-700' : ''" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-            <i class="fa-solid fa-gauge w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
-            <span class="ms-3">Dashboard</span>
+            <i class="fa-solid fa-gauge w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i><span class="ms-3">Dashboard</span>
           </a>
         </li>
         <li>
           <a href="#" @click="currentView = 'filemanager'" :class="currentView === 'filemanager' ? 'bg-gray-100 dark:bg-gray-700' : ''" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-            <i class="fa-solid fa-folder-open w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">File Manager</span>
+            <i class="fa-solid fa-folder-open w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i><span class="flex-1 ms-3 whitespace-nowrap">File Manager</span>
           </a>
         </li>
-        <li>
-          <button type="button" @click="kanbanOpen = !kanbanOpen" class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-            <i class="fa-solid fa-list-check w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
-            <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap">Kanban</span>
-            <svg class="w-3 h-3" :class="kanbanOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
-          </button>
-          <ul x-show="kanbanOpen" x-transition.duration.300ms class="py-2 space-y-2">
-            <li><a href="#" class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Todo</a></li>
-            <li><a href="#" class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">In Progress</a></li>
-            <li><a href="#" class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Done</a></li>
-          </ul>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-            <i class="fa-solid fa-boxes-stacked w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">Products</span>
-            <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">3</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-            <i class="fa-solid fa-users w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">Users</span>
-          </a>
-        </li>
-      </ul>
+        </ul>
     </div>
   </aside>
 
@@ -219,49 +150,7 @@
       
       <div x-show="currentView === 'dashboard'" x-transition.opacity>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Dashboard Overview 📊</h1>
-        
-        <div class="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
-            <div class="flex items-center justify-between mb-4"><h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Revenue</h5><span class="text-xs font-normal text-gray-500 dark:text-gray-400">vs last month</span></div>
-            <div class="flex items-baseline"><span class="text-4xl font-extrabold text-green-600 dark:text-green-500">$52,635</span><span class="flex items-center ms-2 text-sm font-semibold text-green-500">12% <svg class="w-2.5 h-2.5 ms-1" fill="none" viewBox="0 0 10 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/></svg></span></div>
-          </div>
-          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
-            <div class="flex items-center justify-between mb-4"><h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Customers</h5><span class="text-xs font-normal text-gray-500 dark:text-gray-400">Total sign-ups</span></div>
-            <div class="flex items-baseline"><span class="text-4xl font-extrabold text-gray-900 dark:text-white">3,452</span><span class="flex items-center ms-2 text-sm font-semibold text-red-500">4.3% <svg class="w-2.5 h-2.5 ms-1 rotate-180" fill="none" viewBox="0 0 10 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/></svg></span></div>
-          </div>
-          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
-            <div class="flex items-center justify-between mb-4"><h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Orders</h5><span class="text-xs font-normal text-gray-500 dark:text-gray-400">This month</span></div>
-            <div class="flex items-baseline"><span class="text-4xl font-extrabold text-gray-900 dark:text-white">1,234</span><span class="flex items-center ms-2 text-sm font-semibold text-green-500">8% <svg class="w-2.5 h-2.5 ms-1" fill="none" viewBox="0 0 10 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/></svg></span></div>
-          </div>
-          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
-            <div class="flex items-center justify-between mb-4"><h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Traffic</h5><span class="text-xs font-normal text-gray-500 dark:text-gray-400">Page views</span></div>
-            <div class="flex items-baseline"><span class="text-4xl font-extrabold text-gray-900 dark:text-white">98.5K</span><span class="flex items-center ms-2 text-sm font-semibold text-green-500">15% <svg class="w-2.5 h-2.5 ms-1" fill="none" viewBox="0 0 10 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/></svg></span></div>
-          </div>
-        </div>
-
-        <div class="mb-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
-          <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
-            <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Latest Customers</h5>
-            <a href="#" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500">View all</a>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                  <th scope="col" class="px-6 py-3">Customer name</th>
-                  <th scope="col" class="px-6 py-3">Email</th>
-                  <th scope="col" class="px-6 py-3">Status</th>
-                  <th scope="col" class="px-6 py-3">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">Jese Leos</th><td class="px-6 py-4">jese@flowbite.com</td><td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Active</span></td><td class="px-6 py-4">$499.00</td></tr>
-                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">Bonnie Green</th><td class="px-6 py-4">bonnie@flowbite.com</td><td class="px-6 py-4"><span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">Pending</span></td><td class="px-6 py-4">$1,299.00</td></tr>
-                 <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">Michael Gough</th><td class="px-6 py-4">michael@flowbite.com</td><td class="px-6 py-4"><span class="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Suspended</span></td><td class="px-6 py-4">$99.00</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <div class="h-96 flex items-center justify-center text-gray-400 dark:text-gray-600">Dashboard Content Here...</div>
       </div>
       
       ---
@@ -273,8 +162,7 @@
             <div class="flex justify-between items-center mb-4 pb-4 border-b dark:border-gray-700">
                 <p class="text-lg font-semibold text-gray-900 dark:text-white">Root Directory</p>
                 <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                    <i class="fa-solid fa-plus me-2"></i>
-                    New Folder
+                    <i class="fa-solid fa-plus me-2"></i> New Folder
                 </button>
             </div>
 
@@ -282,9 +170,9 @@
                 <template x-for="file in files" :key="file.name">
                     <li class="py-1">
                         <div x-data="fileItem(file)">
-                            <div class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 cursor-pointer transition duration-150 ease-in-out" 
-                                 :class="{ 'font-semibold bg-gray-100 dark:bg-gray-700': file.type === 'folder' && isOpen }"
-                                 @click="toggle()">
+                            <div class="file-row" 
+                                 @click="toggle()"
+                                 :class="file.type === 'folder' && isOpen ? activeFolderClasses : ''">
                                  
                                 <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
                                     <template x-if="file.type === 'folder'">
@@ -305,9 +193,9 @@
                                     <template x-for="child in file.children" :key="child.name">
                                         <li class="py-1">
                                              <div x-data="fileItem(child)">
-                                                <div class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 cursor-pointer transition duration-150 ease-in-out"
-                                                     :class="{ 'font-semibold bg-gray-100 dark:bg-gray-700': child.type === 'folder' && isOpen }"
-                                                     @click="toggle()">
+                                                <div class="file-row"
+                                                     @click="toggle()"
+                                                     :class="child.type === 'folder' && isOpen ? activeFolderClasses : ''">
                                                      
                                                     <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
                                                         <template x-if="child.type === 'folder'">
@@ -328,10 +216,8 @@
                                                         <template x-for="grandchild in child.children" :key="grandchild.name">
                                                             <li class="py-1">
                                                                  <div x-data="fileItem(grandchild)">
-                                                                    <div class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 cursor-pointer transition duration-150 ease-in-out" 
-                                                                         @click="toggle()">
-                                                                         
-                                                                        <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
+                                                                    <div class="file-row" @click="toggle()">
+                                                                         <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
                                                                              <div class="w-5"></div>
                                                                             <div x-html="$store.app.getFileIcon(grandchild.type, grandchild.name)"></div>
                                                                             <span x-text="grandchild.name"></span>
