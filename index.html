@@ -1,13 +1,226 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en" x-data="{ sidebarOpen: false, notifOpen: false, userOpen: false }">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+<script type="module" src="/src/main.js"></script>
+
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- NAVBAR -->
+  <nav class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
+    <div class="mx-auto max-w-screen-2xl flex items-center justify-between p-4">
+
+      <!-- Mobile menu button -->
+      <button @click="sidebarOpen = !sidebarOpen" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <span class="font-bold text-xl text-gray-800">Admin Dashboard</span>
+
+      <div class="flex items-center gap-4">
+
+        <!-- Notifications Dropdown -->
+        <div x-data="{ open: false }" class="relative">
+          <button @click="open = !open" class="relative p-2 rounded-lg hover:bg-gray-100 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span class="absolute -top-1 -right-1 h-5 w-5 text-xs font-bold text-white bg-red-600 rounded-full flex items-center justify-center">
+              3
+            </span>
+          </button>
+
+          <div x-show="open"
+               @click.away="open = false"
+               x-transition
+               class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            <div class="p-3 border-b font-semibold text-gray-700">Notifications</div>
+            <ul class="p-3 space-y-3 text-sm">
+              <li class="flex items-start gap-3 text-gray-600">
+                <span>New email received</span>
+                <span class="text-xs text-gray-400">2m ago</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray-600">
+                <span>New user registered</span>
+                <span class="text-xs text-gray-400">15m ago</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray-600">
+                <span>⚠️ Server warning</span>
+                <span class="text-xs text-gray-400">1h ago</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- User Menu Dropdown -->
+        <div x-data="{ open: false }" class="relative">
+          <button @click="open = !open" class="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition">
+            <img src="https://i.pravatar.cc/100?img=12" alt="User" class="w-full h-full object-cover">
+          </button>
+
+          <div x-show="open"
+               @click.away="open = false"
+               x-transition
+               class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            <ul class="py-2 text-sm text-gray-700">
+              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Profile</a></li>
+              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Settings</a></li>
+              <li><hr class="my-1"></li>
+              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 text-red-600">Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+         class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 shadow-lg p-6 pt-24 z-40 transition-transform duration-300 ease-in-out md:translate-x-0">
+    
+    <h2 class="text-xl font-bold text-gray-800 mb-8">Menu</h2>
+
+    <nav class="space-y-2">
+      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition text-gray-700 font-medium">
+        <span>📊</span> Dashboard
+      </a>
+      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition text-gray-700">
+        <span>📁</span> Projects
+      </a>
+      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition text-gray-700">
+        <span>👥</span> Users
+      </a>
+      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition text-gray-700">
+        <span>⚙️</span> Settings
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Overlay for mobile -->
+  <div x-show="sidebarOpen" 
+       @click="sidebarOpen = false"
+       class="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="pt-24 md:ml-64 p-6 space-y-10">
+    <h1 class="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
+
+    <!-- Stats Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h3 class="text-gray-500 text-sm font-medium">Total Users</h3>
+        <p class="text-3xl font-bold text-gray-800 mt-2">12,430</p>
+        <p class="text-green-600 text-sm mt-2">↑ 12% from last month</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h3 class="text-gray-500 text-sm font-medium">Revenue</h3>
+        <p class="text-3xl font-bold text-gray-800 mt-2">$34,900</p>
+        <p class="text-green-600 text-sm mt-2">↑ 8% from last month</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h3 class="text-gray-500 text-sm font-medium">Active Sessions</h3>
+        <p class="text-3xl font-bold text-gray-800 mt-2">431</p>
+        <p class="text-red-600 text-sm mt-2">↓ 3% from yesterday</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h3 class="text-gray-500 text-sm font-medium">Open Tickets</h3>
+        <p class="text-3xl font-bold text-gray-800 mt-2">57</p>
+        <p class="text-yellow-600 text-sm mt-2">+5 new today</p>
+      </div>
+    </section>
+
+    <!-- Chart Placeholder -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">Website Traffic</h3>
+      <div class="h-80 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+        Chart.js / ApexCharts goes here
+      </div>
+    </section>
+
+    <!-- Recent Users Table -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-semibold text-gray-800">Recent Users</h3>
+        <a href="#" class="text-blue-600 hover:underline text-sm">View all →</a>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+            <tr>
+              <th class="px-6 py-3">User</th>
+              <th class="px-6 py-3">Email</th>
+              <th class="px-6 py-3">Role</th>
+              <th class="px-6 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody class="text-gray-700">
+            <tr class="border-b hover:bg-gray-50">
+              <td class="px-6 py-4 flex items-center gap-3">
+                <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=5" alt="">
+                Alice Johnson
+              </td>
+              <td class="px-6 py-4">alice@example.com</td>
+              <td class="px-6 py-4">Admin</td>
+              <td class="px-6 py-4"><span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span></td>
+            </tr>
+            <tr class="border-b hover:bg-gray-50">
+              <td class="px-6 py-4 flex items-center gap-3">
+                <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=8" alt="">
+                Mark Davis
+              </td>
+              <td class="px-6 py-4">mark@example.com</td>
+              <td class="px-6 py-4">Editor</td>
+              <td class="px-6 py-4"><span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Pending</span></td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 flex items-center gap-3">
+                <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=3" alt="">
+                Julia Chen
+              </td>
+              <td class="px-6 py-4">julia@example.com</td>
+              <td class="px-6 py-4">User</td>
+              <td class="px-6 py-4"><span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs">Blocked</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Activity Timeline -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-6">Recent Activity</h3>
+      <ol class="relative border-s-2 border-gray-300 ml-3">
+        <li class="mb-8 ml-8">
+          <span class="absolute -left-4 flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">✓</span>
+          <div>
+            <h4 class="font-semibold text-gray-800">New user registered</h4>
+            <p class="text-sm text-gray-500">Today at 10:32 AM</p>
+          </div>
+        </li>
+        <li class="mb-8 ml-8">
+          <span class="absolute -left-4 flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">📦</span>
+          <div>
+            <h4 class="font-semibold text-gray-800">New order received</h4>
+            <p class="text-sm text-gray-500">Today at 9:15 AM</p>
+          </div>
+        </li>
+        <li class="ml-8">
+          <span class="absolute -left-4 flex items-center justify-center w-8 h-8 bg-yellow-100 rounded-full">⚠</span>
+          <div>
+            <h4 class="font-semibold text-gray-800">Server Warning</h4>
+            <p class="text-sm text-gray-500">Yesterday at 11:42 PM</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+  </main>
+</body>
 </html>
