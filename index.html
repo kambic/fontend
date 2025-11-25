@@ -1,226 +1,364 @@
 <!DOCTYPE html>
-<html lang="en" x-data="{ sidebarOpen: false, notifOpen: false, userOpen: false }">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard</title>
-<script type="module" src="/src/main.js"></script>
-
+  <title>Flowbite Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-50 dark:bg-gray-900" x-data="dashboardApp()">
 
-  <!-- NAVBAR -->
-  <nav class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
-    <div class="mx-auto max-w-screen-2xl flex items-center justify-between p-4">
+  <script>
+    function dashboardApp() {
+      return {
+        // Layout State
+        sidebarOpen: window.innerWidth >= 640,
+        notificationsOpen: false,
+        userMenuOpen: false,
+        kanbanOpen: false,
+        currentView: 'dashboard',
 
-      <!-- Mobile menu button -->
-      <button @click="sidebarOpen = !sidebarOpen" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
+        // File Manager State
+        files: [
+          { name: 'Documents', type: 'folder', size: '', date: '2023-11-20', children: [
+            { name: 'Project Proposal.pdf', type: 'file', size: '1.2MB', date: '2023-11-20' },
+            { name: 'Images', type: 'folder', size: '', date: '2023-11-18', children: [
+              { name: 'logo.svg', type: 'file', size: '10KB', date: '2023-11-18' },
+              { name: 'photos', type: 'folder', size: '', date: '2023-11-15', children: [
+                { name: 'vacation.jpg', type: 'file', size: '3.5MB', date: '2023-11-15' }
+              ]},
+            ]},
+          ]},
+          { name: 'Videos', type: 'folder', size: '', date: '2023-10-01', children: [] },
+          { name: 'index.html', type: 'file', size: '5KB', date: '2023-11-24' },
+          { name: 'styles.css', type: 'file', size: '20KB', date: '2023-11-24' },
+          { name: 'script.js', type: 'file', size: '8KB', date: '2023-11-24' },
+          { name: 'README.md', type: 'file', size: '1KB', date: '2023-11-24' },
+        ],
+        
+        openFolders: [], 
 
-      <span class="font-bold text-xl text-gray-800">Admin Dashboard</span>
+        toggleFolder(folderName) {
+          const index = this.openFolders.indexOf(folderName);
+          if (index > -1) {
+            this.openFolders.splice(index, 1);
+          } else {
+            this.openFolders.push(folderName);
+          }
+        },
 
-      <div class="flex items-center gap-4">
+        isFolderOpen(folderName) {
+          return this.openFolders.includes(folderName);
+        },
+        
+        // Utility using Font Awesome classes instead of SVGs
+        getFileIcon(type, name) {
+          if (type === 'folder') {
+            // Folder icon is handled separately by the chevron logic
+            return '<i class="fa-solid fa-folder me-2 text-yellow-500"></i>';
+          } 
+          
+          const extension = name.split('.').pop().toLowerCase();
+          
+          if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(extension)) {
+            return '<i class="fa-regular fa-image me-2 text-purple-500"></i>';
+          } 
+          if (extension === 'pdf') {
+            return '<i class="fa-regular fa-file-pdf me-2 text-red-600"></i>';
+          }
+          if (['html', 'css', 'js', 'json', 'ts'].includes(extension)) {
+             return '<i class="fa-regular fa-file-code me-2 text-blue-500"></i>';
+          }
+          if (['md', 'txt', 'log'].includes(extension)) {
+             return '<i class="fa-regular fa-file-lines me-2 text-gray-400"></i>';
+          }
+          if (['zip', 'rar', '7z'].includes(extension)) {
+             return '<i class="fa-regular fa-file-zipper me-2 text-orange-500"></i>';
+          }
+           // Default file icon
+           return '<i class="fa-regular fa-file me-2 text-gray-500"></i>';
+        },
+      }
+    }
+    
+    // Component for recursive rendering of file manager items
+    function fileItem(file) {
+      return {
+        file: file,
+        isOpen: false, 
+        init() {
+          this.isOpen = this.$store.app.isFolderOpen(this.file.name);
+          this.$watch('$store.app.openFolders', () => {
+             this.isOpen = this.$store.app.isFolderOpen(this.file.name);
+          })
+        },
+        toggle() {
+          if (this.file.type === 'folder') {
+            this.$store.app.toggleFolder(this.file.name);
+          }
+        }
+      }
+    }
+    
+    // Global store setup for Alpine 3+
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('app', dashboardApp());
+    });
+  </script>
 
-        <!-- Notifications Dropdown -->
-        <div x-data="{ open: false }" class="relative">
-          <button @click="open = !open" class="relative p-2 rounded-lg hover:bg-gray-100 transition">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+  <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+    <div class="px-3 py-3 lg:px-5 lg:pl-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center justify-start rtl:justify-end">
+          <button @click="sidebarOpen = !sidebarOpen" type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
             </svg>
-            <span class="absolute -top-1 -right-1 h-5 w-5 text-xs font-bold text-white bg-red-600 rounded-full flex items-center justify-center">
-              3
-            </span>
           </button>
-
-          <div x-show="open"
-               @click.away="open = false"
-               x-transition
-               class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-            <div class="p-3 border-b font-semibold text-gray-700">Notifications</div>
-            <ul class="p-3 space-y-3 text-sm">
-              <li class="flex items-start gap-3 text-gray-600">
-                <span>New email received</span>
-                <span class="text-xs text-gray-400">2m ago</span>
-              </li>
-              <li class="flex items-start gap-3 text-gray-600">
-                <span>New user registered</span>
-                <span class="text-xs text-gray-400">15m ago</span>
-              </li>
-              <li class="flex items-start gap-3 text-gray-600">
-                <span>⚠️ Server warning</span>
-                <span class="text-xs text-gray-400">1h ago</span>
-              </li>
-            </ul>
-          </div>
+          <a href="#" class="flex ms-2 md:me-24">
+            <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">Flowbite Admin</span>
+          </a>
         </div>
-
-        <!-- User Menu Dropdown -->
-        <div x-data="{ open: false }" class="relative">
-          <button @click="open = !open" class="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition">
-            <img src="https://i.pravatar.cc/100?img=12" alt="User" class="w-full h-full object-cover">
-          </button>
-
-          <div x-show="open"
-               @click.away="open = false"
-               x-transition
-               class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-            <ul class="py-2 text-sm text-gray-700">
-              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Profile</a></li>
-              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Settings</a></li>
-              <li><hr class="my-1"></li>
-              <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 text-red-600">Logout</a></li>
-            </ul>
+        <div class="flex items-center gap-3">
+          <div class="hidden lg:block">
+            <div class="relative">
+              <input type="text" class="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Search...">
+              <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 20 20">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="relative">
+            <button type="button" class="relative p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700" @click="notificationsOpen = !notificationsOpen">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+              </svg>
+              <span class="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">3</span>
+            </button>
+            <div x-show="notificationsOpen" @click.away="notificationsOpen = false" x-transition.origin.top.right class="absolute right-0 top-14 z-20 w-full max-w-sm bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-800 dark:divide-gray-700">
+              <div class="block px-4 py-2 font-medium text-center text-gray-700 rounded-t-lg bg-gray-50 dark:bg-gray-800 dark:text-white">Notifications</div>
+              <div class="divide-y divide-gray-100 dark:divide-gray-700">
+                <a href="#" class="flex px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700">...</a>
+                <a href="#" class="flex px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700">...</a>
+              </div>
+            </div>
+          </div>
+          <div class="relative">
+            <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" @click="userMenuOpen = !userMenuOpen">
+              <img class="w-8 h-8 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo">
+            </button>
+            <div x-show="userMenuOpen" @click.away="userMenuOpen = false" x-transition.origin.top.right class="absolute right-0 z-50 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600">
+              <div class="px-4 py-3">
+                <p class="text-sm text-gray-900 dark:text-white">Neil Sims</p>
+                <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300">neil.sims@flowbite.com</p>
+              </div>
+              <ul class="py-1">
+                <li><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Dashboard</a></li>
+                <li><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Settings</a></li>
+                <li><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Sign out</a></li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </nav>
 
-  <!-- SIDEBAR -->
-  <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-         class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 shadow-lg p-6 pt-24 z-40 transition-transform duration-300 ease-in-out md:translate-x-0">
-    
-    <h2 class="text-xl font-bold text-gray-800 mb-8">Menu</h2>
-
-    <nav class="space-y-2">
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition text-gray-700 font-medium">
-        <span>📊</span> Dashboard
-      </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition text-gray-700">
-        <span>📁</span> Projects
-      </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition text-gray-700">
-        <span>👥</span> Users
-      </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition text-gray-700">
-        <span>⚙️</span> Settings
-      </a>
-    </nav>
+  <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700">
+    <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
+      <ul class="space-y-2 font-medium">
+        <li>
+          <a href="#" @click="currentView = 'dashboard'" :class="currentView === 'dashboard' ? 'bg-gray-100 dark:bg-gray-700' : ''" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <i class="fa-solid fa-gauge w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+            <span class="ms-3">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" @click="currentView = 'filemanager'" :class="currentView === 'filemanager' ? 'bg-gray-100 dark:bg-gray-700' : ''" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <i class="fa-solid fa-folder-open w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap">File Manager</span>
+          </a>
+        </li>
+        <li>
+          <button type="button" @click="kanbanOpen = !kanbanOpen" class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+            <i class="fa-solid fa-list-check w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+            <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap">Kanban</span>
+            <svg class="w-3 h-3" :class="kanbanOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+          </button>
+          <ul x-show="kanbanOpen" x-transition.duration.300ms class="py-2 space-y-2">
+            <li><a href="#" class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Todo</a></li>
+            <li><a href="#" class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">In Progress</a></li>
+            <li><a href="#" class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Done</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <i class="fa-solid fa-boxes-stacked w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap">Products</span>
+            <span class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">3</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <i class="fa-solid fa-users w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap">Users</span>
+          </a>
+        </li>
+      </ul>
+    </div>
   </aside>
 
-  <!-- Overlay for mobile -->
-  <div x-show="sidebarOpen" 
-       @click="sidebarOpen = false"
-       class="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
-
-  <!-- MAIN CONTENT -->
-  <main class="pt-24 md:ml-64 p-6 space-y-10">
-    <h1 class="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
-
-    <!-- Stats Cards -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h3 class="text-gray-500 text-sm font-medium">Total Users</h3>
-        <p class="text-3xl font-bold text-gray-800 mt-2">12,430</p>
-        <p class="text-green-600 text-sm mt-2">↑ 12% from last month</p>
-      </div>
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h3 class="text-gray-500 text-sm font-medium">Revenue</h3>
-        <p class="text-3xl font-bold text-gray-800 mt-2">$34,900</p>
-        <p class="text-green-600 text-sm mt-2">↑ 8% from last month</p>
-      </div>
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h3 class="text-gray-500 text-sm font-medium">Active Sessions</h3>
-        <p class="text-3xl font-bold text-gray-800 mt-2">431</p>
-        <p class="text-red-600 text-sm mt-2">↓ 3% from yesterday</p>
-      </div>
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h3 class="text-gray-500 text-sm font-medium">Open Tickets</h3>
-        <p class="text-3xl font-bold text-gray-800 mt-2">57</p>
-        <p class="text-yellow-600 text-sm mt-2">+5 new today</p>
-      </div>
-    </section>
-
-    <!-- Chart Placeholder -->
-    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 class="text-xl font-semibold text-gray-800 mb-4">Website Traffic</h3>
-      <div class="h-80 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500">
-        Chart.js / ApexCharts goes here
-      </div>
-    </section>
-
-    <!-- Recent Users Table -->
-    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-xl font-semibold text-gray-800">Recent Users</h3>
-        <a href="#" class="text-blue-600 hover:underline text-sm">View all →</a>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
-            <tr>
-              <th class="px-6 py-3">User</th>
-              <th class="px-6 py-3">Email</th>
-              <th class="px-6 py-3">Role</th>
-              <th class="px-6 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody class="text-gray-700">
-            <tr class="border-b hover:bg-gray-50">
-              <td class="px-6 py-4 flex items-center gap-3">
-                <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=5" alt="">
-                Alice Johnson
-              </td>
-              <td class="px-6 py-4">alice@example.com</td>
-              <td class="px-6 py-4">Admin</td>
-              <td class="px-6 py-4"><span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span></td>
-            </tr>
-            <tr class="border-b hover:bg-gray-50">
-              <td class="px-6 py-4 flex items-center gap-3">
-                <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=8" alt="">
-                Mark Davis
-              </td>
-              <td class="px-6 py-4">mark@example.com</td>
-              <td class="px-6 py-4">Editor</td>
-              <td class="px-6 py-4"><span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Pending</span></td>
-            </tr>
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 flex items-center gap-3">
-                <img class="w-10 h-10 rounded-full" src="https://i.pravatar.cc/100?img=3" alt="">
-                Julia Chen
-              </td>
-              <td class="px-6 py-4">julia@example.com</td>
-              <td class="px-6 py-4">User</td>
-              <td class="px-6 py-4"><span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs">Blocked</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Activity Timeline -->
-    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 class="text-xl font-semibold text-gray-800 mb-6">Recent Activity</h3>
-      <ol class="relative border-s-2 border-gray-300 ml-3">
-        <li class="mb-8 ml-8">
-          <span class="absolute -left-4 flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">✓</span>
-          <div>
-            <h4 class="font-semibold text-gray-800">New user registered</h4>
-            <p class="text-sm text-gray-500">Today at 10:32 AM</p>
+  <div class="p-4 sm:ml-64">
+    <div class="p-4 mt-14">
+      
+      <div x-show="currentView === 'dashboard'" x-transition.opacity>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Dashboard Overview 📊</h1>
+        
+        <div class="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
+            <div class="flex items-center justify-between mb-4"><h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Revenue</h5><span class="text-xs font-normal text-gray-500 dark:text-gray-400">vs last month</span></div>
+            <div class="flex items-baseline"><span class="text-4xl font-extrabold text-green-600 dark:text-green-500">$52,635</span><span class="flex items-center ms-2 text-sm font-semibold text-green-500">12% <svg class="w-2.5 h-2.5 ms-1" fill="none" viewBox="0 0 10 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/></svg></span></div>
           </div>
-        </li>
-        <li class="mb-8 ml-8">
-          <span class="absolute -left-4 flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">📦</span>
-          <div>
-            <h4 class="font-semibold text-gray-800">New order received</h4>
-            <p class="text-sm text-gray-500">Today at 9:15 AM</p>
+          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
+            <div class="flex items-center justify-between mb-4"><h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Customers</h5><span class="text-xs font-normal text-gray-500 dark:text-gray-400">Total sign-ups</span></div>
+            <div class="flex items-baseline"><span class="text-4xl font-extrabold text-gray-900 dark:text-white">3,452</span><span class="flex items-center ms-2 text-sm font-semibold text-red-500">4.3% <svg class="w-2.5 h-2.5 ms-1 rotate-180" fill="none" viewBox="0 0 10 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/></svg></span></div>
           </div>
-        </li>
-        <li class="ml-8">
-          <span class="absolute -left-4 flex items-center justify-center w-8 h-8 bg-yellow-100 rounded-full">⚠</span>
-          <div>
-            <h4 class="font-semibold text-gray-800">Server Warning</h4>
-            <p class="text-sm text-gray-500">Yesterday at 11:42 PM</p>
+          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
+            <div class="flex items-center justify-between mb-4"><h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Orders</h5><span class="text-xs font-normal text-gray-500 dark:text-gray-400">This month</span></div>
+            <div class="flex items-baseline"><span class="text-4xl font-extrabold text-gray-900 dark:text-white">1,234</span><span class="flex items-center ms-2 text-sm font-semibold text-green-500">8% <svg class="w-2.5 h-2.5 ms-1" fill="none" viewBox="0 0 10 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/></svg></span></div>
           </div>
-        </li>
-      </ol>
-    </section>
-  </main>
+          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
+            <div class="flex items-center justify-between mb-4"><h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Traffic</h5><span class="text-xs font-normal text-gray-500 dark:text-gray-400">Page views</span></div>
+            <div class="flex items-baseline"><span class="text-4xl font-extrabold text-gray-900 dark:text-white">98.5K</span><span class="flex items-center ms-2 text-sm font-semibold text-green-500">15% <svg class="w-2.5 h-2.5 ms-1" fill="none" viewBox="0 0 10 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/></svg></span></div>
+          </div>
+        </div>
+
+        <div class="mb-4 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
+          <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
+            <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Latest Customers</h5>
+            <a href="#" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500">View all</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                  <th scope="col" class="px-6 py-3">Customer name</th>
+                  <th scope="col" class="px-6 py-3">Email</th>
+                  <th scope="col" class="px-6 py-3">Status</th>
+                  <th scope="col" class="px-6 py-3">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">Jese Leos</th><td class="px-6 py-4">jese@flowbite.com</td><td class="px-6 py-4"><span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Active</span></td><td class="px-6 py-4">$499.00</td></tr>
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">Bonnie Green</th><td class="px-6 py-4">bonnie@flowbite.com</td><td class="px-6 py-4"><span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">Pending</span></td><td class="px-6 py-4">$1,299.00</td></tr>
+                 <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600"><th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">Michael Gough</th><td class="px-6 py-4">michael@flowbite.com</td><td class="px-6 py-4"><span class="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Suspended</span></td><td class="px-6 py-4">$99.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      ---
+      
+      <div x-show="currentView === 'filemanager'" x-transition.opacity>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">File Manager 📂</h1>
+        
+        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b dark:border-gray-700">
+                <p class="text-lg font-semibold text-gray-900 dark:text-white">Root Directory</p>
+                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                    <i class="fa-solid fa-plus me-2"></i>
+                    New Folder
+                </button>
+            </div>
+
+            <ul class="space-y-1 divide-y divide-gray-100 dark:divide-gray-700">
+                <template x-for="file in files" :key="file.name">
+                    <li class="py-1">
+                        <div x-data="fileItem(file)">
+                            <div class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 cursor-pointer transition duration-150 ease-in-out" 
+                                 :class="{ 'font-semibold bg-gray-100 dark:bg-gray-700': file.type === 'folder' && isOpen }"
+                                 @click="toggle()">
+                                 
+                                <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
+                                    <template x-if="file.type === 'folder'">
+                                        <i class="fa-solid fa-chevron-right w-3 h-3 me-2 text-gray-400 transition-transform duration-200" :class="{ 'rotate-90': isOpen }"></i>
+                                    </template>
+                                    <template x-if="file.type !== 'folder'">
+                                        <div class="w-5"></div> 
+                                    </template>
+                                    <div x-html="$store.app.getFileIcon(file.type, file.name)"></div>
+                                    <span x-text="file.name"></span>
+                                </div>
+                                <div class="w-1/4 text-gray-500 dark:text-gray-400" x-text="file.size"></div>
+                                <div class="w-1/4 text-right text-gray-500 dark:text-gray-400" x-text="file.date"></div>
+                            </div>
+                            
+                            <div x-show="file.type === 'folder' && isOpen" x-transition.opacity.duration.300ms>
+                                <ul class="ms-8 border-l border-gray-200 dark:border-gray-700 pl-4 py-1 space-y-1">
+                                    <template x-for="child in file.children" :key="child.name">
+                                        <li class="py-1">
+                                             <div x-data="fileItem(child)">
+                                                <div class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 cursor-pointer transition duration-150 ease-in-out"
+                                                     :class="{ 'font-semibold bg-gray-100 dark:bg-gray-700': child.type === 'folder' && isOpen }"
+                                                     @click="toggle()">
+                                                     
+                                                    <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
+                                                        <template x-if="child.type === 'folder'">
+                                                             <i class="fa-solid fa-chevron-right w-3 h-3 me-2 text-gray-400 transition-transform duration-200" :class="{ 'rotate-90': isOpen }"></i>
+                                                        </template>
+                                                        <template x-if="child.type !== 'folder'">
+                                                            <div class="w-5"></div>
+                                                        </template>
+                                                        <div x-html="$store.app.getFileIcon(child.type, child.name)"></div>
+                                                        <span x-text="child.name"></span>
+                                                    </div>
+                                                    <div class="w-1/4 text-gray-500 dark:text-gray-400" x-text="child.size"></div>
+                                                    <div class="w-1/4 text-right text-gray-500 dark:text-gray-400" x-text="child.date"></div>
+                                                </div>
+                                                
+                                                <div x-show="child.type === 'folder' && isOpen" x-transition.opacity.duration.300ms>
+                                                    <ul class="ms-8 border-l border-gray-200 dark:border-gray-700 pl-4 py-1 space-y-1">
+                                                        <template x-for="grandchild in child.children" :key="grandchild.name">
+                                                            <li class="py-1">
+                                                                 <div x-data="fileItem(grandchild)">
+                                                                    <div class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 cursor-pointer transition duration-150 ease-in-out" 
+                                                                         @click="toggle()">
+                                                                         
+                                                                        <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
+                                                                             <div class="w-5"></div>
+                                                                            <div x-html="$store.app.getFileIcon(grandchild.type, grandchild.name)"></div>
+                                                                            <span x-text="grandchild.name"></span>
+                                                                        </div>
+                                                                        <div class="w-1/4 text-gray-500 dark:text-gray-400" x-text="grandchild.size"></div>
+                                                                        <div class="w-1/4 text-right text-gray-500 dark:text-gray-400" x-text="grandchild.date"></div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                        </template>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
 </body>
 </html>
