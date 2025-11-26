@@ -1,249 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flowbite Admin Dashboard - Simplified</title>
+  <title>Flowbite Admin - File Manager with Search</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-900" x-data="dashboardApp()">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen" x-data="fileManager()">
 
   <script>
-    function dashboardApp() {
+    function fileManager() {
       return {
-        // Layout State (minimal classes used here)
         sidebarOpen: window.innerWidth >= 640,
-        notificationsOpen: false,
-        userMenuOpen: false,
-        kanbanOpen: false,
-        currentView: 'filemanager', // Start on file manager for easy testing
+        currentView: 'filemanager',
+        searchQuery: '',
 
-        // File Manager State (unchanged)
+        // Full file structure
         files: [
           { name: 'Documents', type: 'folder', size: '', date: '2023-11-20', children: [
             { name: 'Project Proposal.pdf', type: 'file', size: '1.2MB', date: '2023-11-20' },
+            { name: 'Contract.docx', type: 'file', size: '450KB', date: '2023-11-19' },
             { name: 'Images', type: 'folder', size: '', date: '2023-11-18', children: [
               { name: 'logo.svg', type: 'file', size: '10KB', date: '2023-11-18' },
+              { name: 'banner.png', type: 'file', size: '890KB', date: '2023-11-17' },
               { name: 'photos', type: 'folder', size: '', date: '2023-11-15', children: [
-                { name: 'vacation.jpg', type: 'file', size: '3.5MB', date: '2023-11-15' }
+                { name: 'vacation.jpg', type: 'file', size: '3.5MB', date: '2023-11-15' },
+                { name: 'team-photo.png', type: 'file', size: '2.1MB', date: '2023-11-10' }
               ]},
             ]},
           ]},
-          { name: 'Videos', type: 'folder', size: '', date: '2023-10-01', children: [] },
+          { name: 'Videos', type: 'folder', size: '', date: '2023-10-01', children: [
+            { name: 'intro.mp4', type: 'file', size: '45MB', date: '2023-10-01' }
+          ]},
           { name: 'index.html', type: 'file', size: '5KB', date: '2023-11-24' },
           { name: 'styles.css', type: 'file', size: '20KB', date: '2023-11-24' },
+          { name: 'app.js', type: 'file', size: '35KB', date: '2023-11-23' },
           { name: 'README.md', type: 'file', size: '1KB', date: '2023-11-24' },
         ],
-        
-        openFolders: [], 
 
-        toggleFolder(folderName) {
-          const index = this.openFolders.indexOf(folderName);
-          if (index > -1) {
-            this.openFolders.splice(index, 1);
+        openFolders: new Set(), // Use Set for faster lookup
+
+        toggleFolder(path) {
+          if (this.openFolders.has(path)) {
+            this.openFolders.delete(path);
           } else {
-            this.openFolders.push(folderName);
+            this.openFolders.add(path);
           }
+          this.openFolders = new Set(this.openFolders); // Trigger reactivity
         },
 
-        isFolderOpen(folderName) {
-          return this.openFolders.includes(folderName);
+        isOpen(path) {
+          return this.openFolders.has(path);
         },
-        
-        // Utility using Font Awesome classes
-        getFileIcon(type, name) {
-          if (type === 'folder') {
-            return '<i class="fa-solid fa-folder me-2 text-yellow-500"></i>';
-          } 
-          const extension = name.split('.').pop().toLowerCase();
-          
-          if (['jpg', 'png', 'gif', 'svg'].includes(extension)) {
-            return '<i class="fa-regular fa-image me-2 text-purple-500"></i>';
-          } 
-          if (extension === 'pdf') {
-            return '<i class="fa-regular fa-file-pdf me-2 text-red-600"></i>';
-          }
-          if (['html', 'css', 'js', 'json'].includes(extension)) {
-             return '<i class="fa-regular fa-file-code me-2 text-blue-500"></i>';
-          }
-          if (['md', 'txt'].includes(extension)) {
-             return '<i class="fa-regular fa-file-lines me-2 text-gray-400"></i>';
-          }
-           return '<i class="fa-regular fa-file me-2 text-gray-500"></i>';
+
+        getIcon(type, name = '') {
+          if (type === 'folder') return 'fa-folder text-yellow-500';
+          const ext = name.split('.').pop().toLowerCase();
+          const map = {
+            pdf: 'fa-file-pdf text-red-600',
+            docx: 'fa-file-word text-blue-700',
+            jpg: 'fa-image text-purple-500', png: 'fa-image text-purple-500',
+            gif: 'fa-image text-purple-500', svg: 'fa-image text-purple-500',
+            mp4: 'fa-file-video text-green-600', mov: 'fa-file-video text-green-600',
+            html: 'fa-file-code text-orange-600', css: 'fa-file-code text-blue-500',
+            js: 'fa-file-code text-yellow-500', json: 'fa-file-code text-yellow-500',
+            md: 'fa-file-lines text-gray-400', txt: 'fa-file-lines text-gray-400'
+          };
+          return map[ext] || 'fa-file text-gray-500';
         },
-      }
-    }
-    
-    // Component for recursive rendering and styling
-    function fileItem(file) {
-      return {
-        file: file,
-        isOpen: false, 
-        
-        // Define reusable classes here
-        baseClasses: 'flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded p-2 cursor-pointer transition duration-150 ease-in-out',
-        activeFolderClasses: 'font-semibold bg-gray-100 dark:bg-gray-700',
-        
-        init() {
-          // Sync state
-          this.isOpen = this.$store.app.isFolderOpen(this.file.name);
-          this.$watch('$store.app.openFolders', () => {
-             this.isOpen = this.$store.app.isFolderOpen(this.file.name);
-          });
-          
-          // Apply base classes to the root element when component loads
-          this.$el.querySelector('.file-row').classList.add(...this.baseClasses.split(' '));
-        },
-        
-        toggle() {
-          if (this.file.type === 'folder') {
-            this.$store.app.toggleFolder(this.file.name);
-          }
+
+        // Search filter (case-insensitive, matches name)
+        filteredFiles() {
+          if (!this.searchQuery.trim()) return this.files;
+
+          const query = this.searchQuery.toLowerCase();
+
+          const filter = (items, parentPath = '') => {
+            return items
+              .map(item => {
+                const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+                const matches = item.name.toLowerCase().includes(query);
+
+                let filteredChildren = [];
+                if (item.children?.length) {
+                  filteredChildren = filter(item.children, fullPath);
+                  // Keep folder if any child matches
+                  if (filteredChildren.length > 0) {
+                    // Auto-open folders that have matches inside
+                    this.openFolders.add(fullPath);
+                  }
+                }
+
+                if (matches || filteredChildren.length > 0) {
+                  return { ...item, children: filteredChildren };
+                }
+                return null;
+              })
+              .filter(Boolean);
+          };
+
+          this.openFolders = new Set(this.openFolders); // Trigger update
+          return filter(this.files);
         }
       }
     }
-    
-    // Global store setup for Alpine 3+
-    document.addEventListener('alpine:init', () => {
-        Alpine.store('app', dashboardApp());
-    });
   </script>
 
+  <!-- Top Navbar -->
   <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-    <div class="px-3 py-3 lg:px-5 lg:pl-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center justify-start rtl:justify-end">
-          <button @click="sidebarOpen = !sidebarOpen" type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path></svg>
-          </button>
-          <a href="#" class="flex ms-2 md:me-24">
-            <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">Flowbite Admin</span>
-          </a>
-        </div>
-        </div>
+    <div class="px-4 py-3 flex items-center justify-between h-16">
+      <div class="flex items-center gap-4">
+        <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 sm:hidden">
+          <i class="fa-bars text-lg"></i>
+        </button>
+        <h1 class="text-xl font-bold">Flowbite Admin</h1>
+      </div>
     </div>
   </nav>
 
-  <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700">
-    <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
-      <ul class="space-y-2 font-medium">
+  <!-- Sidebar -->
+  <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" 
+         class="fixed top-16 left-0 z-40 w-64 h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 transition-transform sm:translate-x-0">
+    <div class="p-4">
+      <ul class="space-y-2">
         <li>
-          <a href="#" @click="currentView = 'dashboard'" :class="currentView === 'dashboard' ? 'bg-gray-100 dark:bg-gray-700' : ''" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-            <i class="fa-solid fa-gauge w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i><span class="ms-3">Dashboard</span>
+          <a @click="currentView = 'filemanager'; searchQuery = ''" 
+             class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer font-medium bg-gray-100 dark:bg-gray-700">
+            <i class="fa-folder-open w-5 text-yellow-600"></i>
+            <span>File Manager</span>
           </a>
         </li>
-        <li>
-          <a href="#" @click="currentView = 'filemanager'" :class="currentView === 'filemanager' ? 'bg-gray-100 dark:bg-gray-700' : ''" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-            <i class="fa-solid fa-folder-open w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i><span class="flex-1 ms-3 whitespace-nowrap">File Manager</span>
-          </a>
-        </li>
-        </ul>
+      </ul>
     </div>
   </aside>
 
-  <div class="p-4 sm:ml-64">
-    <div class="p-4 mt-14">
-      
-      <div x-show="currentView === 'dashboard'" x-transition.opacity>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Dashboard Overview 📊</h1>
-        <div class="h-96 flex items-center justify-center text-gray-400 dark:text-gray-600">Dashboard Content Here...</div>
-      </div>
-      
-      ---
-      
-      <div x-show="currentView === 'filemanager'" x-transition.opacity>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">File Manager 📂</h1>
-        
-        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-md dark:border-gray-700 dark:bg-gray-800">
-            <div class="flex justify-between items-center mb-4 pb-4 border-b dark:border-gray-700">
-                <p class="text-lg font-semibold text-gray-900 dark:text-white">Root Directory</p>
-                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                    <i class="fa-solid fa-plus me-2"></i> New Folder
-                </button>
-            </div>
+  <!-- Main Content -->
+  <main class="sm:ml-64 pt-20 px-6">
+    <div x-show="currentView === 'filemanager'" x-transition>
+      <h1 class="text-3xl font-bold mb-8">File Manager</h1>
 
-            <ul class="space-y-1 divide-y divide-gray-100 dark:divide-gray-700">
-                <template x-for="file in files" :key="file.name">
-                    <li class="py-1">
-                        <div x-data="fileItem(file)">
-                            <div class="file-row" 
-                                 @click="toggle()"
-                                 :class="file.type === 'folder' && isOpen ? activeFolderClasses : ''">
-                                 
-                                <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
-                                    <template x-if="file.type === 'folder'">
-                                        <i class="fa-solid fa-chevron-right w-3 h-3 me-2 text-gray-400 transition-transform duration-200" :class="{ 'rotate-90': isOpen }"></i>
-                                    </template>
-                                    <template x-if="file.type !== 'folder'">
-                                        <div class="w-5"></div> 
-                                    </template>
-                                    <div x-html="$store.app.getFileIcon(file.type, file.name)"></div>
-                                    <span x-text="file.name"></span>
-                                </div>
-                                <div class="w-1/4 text-gray-500 dark:text-gray-400" x-text="file.size"></div>
-                                <div class="w-1/4 text-right text-gray-500 dark:text-gray-400" x-text="file.date"></div>
-                            </div>
-                            
-                            <div x-show="file.type === 'folder' && isOpen" x-transition.opacity.duration.300ms>
-                                <ul class="ms-8 border-l border-gray-200 dark:border-gray-700 pl-4 py-1 space-y-1">
-                                    <template x-for="child in file.children" :key="child.name">
-                                        <li class="py-1">
-                                             <div x-data="fileItem(child)">
-                                                <div class="file-row"
-                                                     @click="toggle()"
-                                                     :class="child.type === 'folder' && isOpen ? activeFolderClasses : ''">
-                                                     
-                                                    <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
-                                                        <template x-if="child.type === 'folder'">
-                                                             <i class="fa-solid fa-chevron-right w-3 h-3 me-2 text-gray-400 transition-transform duration-200" :class="{ 'rotate-90': isOpen }"></i>
-                                                        </template>
-                                                        <template x-if="child.type !== 'folder'">
-                                                            <div class="w-5"></div>
-                                                        </template>
-                                                        <div x-html="$store.app.getFileIcon(child.type, child.name)"></div>
-                                                        <span x-text="child.name"></span>
-                                                    </div>
-                                                    <div class="w-1/4 text-gray-500 dark:text-gray-400" x-text="child.size"></div>
-                                                    <div class="w-1/4 text-right text-gray-500 dark:text-gray-400" x-text="child.date"></div>
-                                                </div>
-                                                
-                                                <div x-show="child.type === 'folder' && isOpen" x-transition.opacity.duration.300ms>
-                                                    <ul class="ms-8 border-l border-gray-200 dark:border-gray-700 pl-4 py-1 space-y-1">
-                                                        <template x-for="grandchild in child.children" :key="grandchild.name">
-                                                            <li class="py-1">
-                                                                 <div x-data="fileItem(grandchild)">
-                                                                    <div class="file-row" @click="toggle()">
-                                                                         <div class="w-1/2 flex items-center text-gray-900 dark:text-white">
-                                                                             <div class="w-5"></div>
-                                                                            <div x-html="$store.app.getFileIcon(grandchild.type, grandchild.name)"></div>
-                                                                            <span x-text="grandchild.name"></span>
-                                                                        </div>
-                                                                        <div class="w-1/4 text-gray-500 dark:text-gray-400" x-text="grandchild.size"></div>
-                                                                        <div class="w-1/4 text-right text-gray-500 dark:text-gray-400" x-text="grandchild.date"></div>
-                                                                    </div>
-                                                                </div>
-                                                            </li>
-                                                        </template>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </template>
-                                </ul>
-                            </div>
-                        </div>
-                    </li>
-                </template>
+      <!-- Search Bar -->
+      <div class="max-w-2xl mb-6">
+        <div class="relative">
+          <i class="fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input 
+            type="text" 
+            x-model="searchQuery"
+            placeholder="Search files and folders..." 
+            class="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+          >
+          <button 
+            @click="searchQuery = ''" 
+            x-show="searchQuery" 
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <i class="fa-xmark"></i>
+          </button>
+        </div>
+        <p class="text-sm text-gray-500 mt-2" x-show="searchQuery">
+          Searching for: <span class="font-medium text-gray-700 dark:text-gray-300" x-text="searchQuery"></span>
+        </p>
+      </div>
+
+      <!-- File Tree Card -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
+          <h2 class="text-lg font-semibold">Root Directory</h2>
+          <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+            <i class="fa-plus"></i> New Folder
+          </button>
+        </div>
+
+        <div class="p-2">
+          <template x-data="{ renderTree(items, path = '') }">
+            <ul class="space-y-1">
+              <template x-for="item in items" :key="item.name">
+                <li>
+                  <!-- File/Folder Row -->
+                  <div
+                    @click="item.type === 'folder' && toggleFolder(path ? path + '/' + item.name : item.name)"
+                    class="flex items-center justify-between py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition group"
+                    :class="{ 'bg-gray-50 dark:bg-gray-750 font-medium': item.type === 'folder' && isOpen(path ? path + '/' + item.name : item.name) }"
+                  >
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                      <!-- Chevron for folders -->
+                      <i x-show="item.type === 'folder'" 
+                         class="fa-chevron-right text-xs text-gray-400 transition-transform duration-200"
+                         :class="{ 'rotate-90': isOpen(path ? path + '/' + item.name : item.name) }"></i>
+                      <i x-show="item.type === 'file'" class="w-4"></i>
+
+                      <!-- Icon -->
+                      <i class="fa-regular w-5" :class="getIcon(item.type, item.name)"></i>
+
+                      <!-- Name -->
+                      <span class="truncate" x-text="item.name"></span>
+                    </div>
+
+                    <div class="flex items-center gap-8 text-sm">
+                      <span class="text-gray-500 w-20 text-center" x-text="item.size || '—'"></span>
+                      <span class="text-gray-500 w-28 text-right" x-text="item.date"></span>
+                    </div>
+                  </div>
+
+                  <!-- Children (Recursive) -->
+                  <div x-show="item.type === 'folder' && isOpen(path ? path + '/' + item.name : item.name)" 
+                       x-transition.height.duration.300ms 
+                       class="overflow-hidden">
+                    <div class="border-l-2 border-gray-200 dark:border-gray-700 ml-8 pl-4 py-1">
+                      <template x-data="{ renderTree(item.children, path ? path + '/' + item.name : item.name) }"></template>
+                    </div>
+                  </div>
+                </li>
+              </template>
             </ul>
+          </template>
+
+          <!-- Render the tree with filtered files -->
+          <div x-init="$nextTick(() => $dispatch('render-tree'))"></div>
+          <template x-data @render-tree="renderTree(filteredFiles())"></template>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="filteredFiles().length === 0" class="p-12 text-center text-gray-500">
+          <i class="fa-folder-open text-6xl mb-4 text-gray-300"></i>
+          <p class="text-lg">No files found</p>
+          <p x-show="searchQuery" class="text-sm mt-2">Try adjusting your search query</p>
         </div>
       </div>
-
     </div>
-  </div>
+  </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
 </body>
